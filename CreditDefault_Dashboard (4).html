@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credit Default Risk — Executive Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F4F3EF;
+      --surface: #FFFFFF;
+      --rule: #E4E2DC;
+      --ink: #1A1A1A;
+      --ink2: #3C3C3C;
+      --muted: #7A7A7A;
+      --dim: #BCBCBC;
+      --navy: #1B2F5E;
+      --blue: #2456C8;
+      --blue-lt: #EEF3FF;
+      --green: #145C42;
+      --green-lt: #EFF8F3;
+      --red: #A81C1C;
+      --red-lt: #FEF1F1;
+      --amber: #8A4200;
+      --amber-lt: #FEF9EE;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .header {
+      background: var(--navy);
+      height: 62px;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .h-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .h-bar {
+      width: 3px;
+      height: 28px;
+      background: #5B8FD4;
+      border-radius: 2px;
+    }
+
+    .h-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 17px;
+      color: #fff;
+      letter-spacing: 0.01em;
+    }
+
+    .h-sub {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .h-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .h-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 3px 10px;
+      border-radius: 3px;
+    }
+
+    .h-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ADE80;
+      animation: p 2s infinite;
+    }
+
+    @keyframes p {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.35
+      }
+    }
+
+    .nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--rule);
+      padding: 0 40px;
+      display: flex;
+    }
+
+    .nav-item {
+      padding: 15px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .nav-item:hover {
+      color: var(--ink);
+    }
+
+    .nav-item.active {
+      color: var(--navy);
+      border-bottom-color: var(--navy);
+      font-weight: 600;
+    }
+
+    .main {
+      padding: 32px 40px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+      animation: up 0.22s ease;
+    }
+
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(5px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .pg-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 26px;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .pg-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 26px;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 20px 22px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .kpi-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 10px;
+    }
+
+    .kpi-val {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .kpi-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .grid-21 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+
+    .c-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 16px;
+      color: var(--navy);
+      margin-bottom: 3px;
+    }
+
+    .c-sub {
+      font-size: 12px;
+      color: var(--muted);
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 16px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 13px;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .ik {
+      color: var(--muted);
+    }
+
+    .iv {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .tier-row {
+      display: grid;
+      grid-template-columns: 12px 160px 1fr 80px 90px 100px 160px;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 14px;
+      border-radius: 7px;
+      margin-bottom: 6px;
+      border: 1px solid var(--rule);
+      background: var(--surface);
+    }
+
+    .tier-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .tier-bg {
+      height: 6px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+    }
+
+    .tier-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .tier-stat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+    }
+
+    .b-green {
+      background: var(--green-lt);
+      color: var(--green);
+      border: 1px solid #A7DFC2;
+    }
+
+    .b-amber {
+      background: var(--amber-lt);
+      color: var(--amber);
+      border: 1px solid #F8D89A;
+    }
+
+    .b-red {
+      background: var(--red-lt);
+      color: var(--red);
+      border: 1px solid #F5AAAA;
+    }
+
+    .b-blue {
+      background: var(--blue-lt);
+      color: var(--blue);
+      border: 1px solid #BFCFFF;
+    }
+
+    .b-navy {
+      background: #EEF2FF;
+      color: var(--navy);
+      border: 1px solid #C7D2FE;
+    }
+
+    .notice {
+      padding: 13px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      line-height: 1.7;
+      margin-top: 14px;
+    }
+
+    .n-blue {
+      background: var(--blue-lt);
+      border: 1px solid #BFCFFF;
+      border-left: 3px solid var(--blue);
+      color: var(--ink2);
+    }
+
+    .n-amber {
+      background: var(--amber-lt);
+      border: 1px solid #F8D89A;
+      border-left: 3px solid #C97000;
+      color: var(--amber);
+    }
+
+    .n-green {
+      background: var(--green-lt);
+      border: 1px solid #A7DFC2;
+      border-left: 3px solid var(--green);
+      color: var(--green);
+    }
+
+    .n-red {
+      background: var(--red-lt);
+      border: 1px solid #F5AAAA;
+      border-left: 3px solid var(--red);
+      color: var(--red);
+    }
+
+    .wcard {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-left: 3px solid;
+      border-radius: 7px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .wt {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .wd {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .fin-block {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fin-stripe {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .fin-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 8px;
+    }
+
+    .fin-val {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .fin-note {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ratio-box {
+      background: var(--navy);
+      border-radius: 8px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .ratio-num {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 54px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .ratio-sub {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .rule {
+      height: 1px;
+      background: var(--rule);
+      margin: 16px 0;
+    }
+
+    .mono-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 18px 0;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      margin: 14px 0;
+    }
+
+    .mono-item {
+      text-align: center;
+    }
+
+    .mono-val {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+
+    .mono-lbl {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .mono-arr {
+      color: var(--dim);
+      font-size: 20px;
+      margin-top: -8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: var(--bg);
+    }
+
+    th {
+      text-align: left;
+      padding: 9px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      border-bottom: 2px solid var(--rule);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover td {
+      background: var(--bg);
+    }
+
+    .mc {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .sl {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sl::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    #liftCanvas {
+      width: 100%;
+      height: 190px;
+      display: block;
+    }
+
+    .footer {
+      margin-top: 48px;
+      padding: 20px 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
+    }
+
+    .fl {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .fr {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--dim);
+      text-align: right;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--dim);
+      border-radius: 3px;
+    }
+
+    .ctrl-panel {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--navy);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 22px;
+    }
+
+    .ctrl-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 15px;
+      color: var(--navy);
+      margin-bottom: 3px;
+    }
+
+    .ctrl-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .ctrl-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .ctrl-item label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 6px;
+    }
+
+    .ctrl-item input[type=range] {
+      width: 100%;
+      accent-color: var(--navy);
+      cursor: pointer;
+    }
+
+    .ctrl-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="h-left">
+      <div class="h-bar"></div>
+      <div>
+        <div class="h-title">Credit Default Risk Intelligence</div>
+        <div class="h-sub">Taiwan Credit Portfolio · 30,000 Customers · MSc FinTech Group 3</div>
+      </div>
+    </div>
+    <div class="h-right">
+      <div class="h-tag">Random Forest · AUC 0.7686</div>
+      <div class="h-status">
+        <div class="dot"></div>Active
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-item active" onclick="show('overview',this)">Portfolio Overview</div>
+    <div class="nav-item" onclick="show('tiers',this)">Risk Tiers</div>
+    <div class="nav-item" onclick="show('financial',this)">Financial Impact</div>
+    <div class="nav-item" onclick="show('early',this)">Early Warning</div>
+    <div class="nav-item" onclick="show('governance',this)">Limitations &amp; Governance</div>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview" class="panel active">
+      <div class="pg-title">Portfolio Overview</div>
+      <div class="pg-sub">Key risk indicators across 6,000 test customers at decision threshold 0.50</div>
+
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--red)"></div>
+          <div class="kpi-label">Customers at Risk</div>
+          <div class="kpi-val" style="color:var(--red)">2,006</div>
+          <div class="kpi-desc">High and Very High Risk combined</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--red)"></div>
+          <div class="kpi-label">Predicted to Default</div>
+          <div class="kpi-val" style="color:var(--red)">1,327</div>
+          <div class="kpi-desc">Of 6,000 test customers (22.1%)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--green)"></div>
+          <div class="kpi-label">Capital Protected</div>
+          <div class="kpi-val" style="color:var(--green)">NT$94M</div>
+          <div class="kpi-desc">705 defaulters correctly identified</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--navy)"></div>
+          <div class="kpi-label">Detection Efficiency</div>
+          <div class="kpi-val" style="color:var(--navy)">2.08×</div>
+          <div class="kpi-desc">Versus random customer review</div>
+        </div>
+      </div>
+
+      <div class="grid-21">
+        <div class="card">
+          <div class="c-title">How the Model Works</div>
+          <div class="c-sub">Summary for senior stakeholders</div>
+          <div style="font-size:14px;line-height:1.85;color:var(--ink2)">
+            This model assigns each credit card customer a probability of defaulting in the following month. Customers
+            are grouped into four risk tiers, each with a defined response. Rather than reviewing all 30,000 customers,
+            the risk team can focus on the top 30% flagged by the model and identify <strong>62.3% of all
+              defaulters</strong> — more than twice the coverage achieved through random selection.
+          </div>
+          <div class="notice n-blue" style="margin-top:16px">
+            At the current threshold of 0.50, the model catches 705 defaulters and protects NT$94.5M in capital. A
+            further 622 defaulters are missed, representing NT$83.3M in avoidable losses. Lowering the threshold
+            recovers more of these — at the cost of flagging additional good customers. This is a business decision.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="c-title">Model Summary</div>
+          <div class="c-sub">Key facts</div>
+          <div class="info-row"><span class="ik">Portfolio size</span><span class="iv">30,000 customers</span></div>
+          <div class="info-row"><span class="ik">Test set</span><span class="iv">6,000 customers</span></div>
+          <div class="info-row"><span class="ik">Default rate</span><span class="iv">22.1%</span></div>
+          <div class="info-row"><span class="ik">Algorithm</span><span class="iv">Random Forest</span></div>
+          <div class="info-row"><span class="ik">Decision threshold</span><span class="iv">0.50</span></div>
+          <div class="info-row"><span class="ik">Explainability</span><span class="iv">SHAP</span></div>
+          <div class="info-row"><span class="ik">Data period</span><span class="iv">Apr – Sep 2005</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="c-title">Strongest Predictor of Default</div>
+        <div class="c-sub">What drives risk in this portfolio</div>
+        <div style="font-size:14px;line-height:1.85;color:var(--ink2)">
+          The most important predictor is <strong>payment delay history</strong> — specifically, the average number of
+          months a customer has been late across the past six months. The most recent month (September) carries the
+          highest individual weight, confirming that recent behaviour is more predictive than older history. Credit
+          limit and bill amounts have comparatively weak predictive power on their own.
+        </div>
+        <div class="notice n-green" style="margin-top:14px">
+          Customers who are 1–2 months late represent the most cost-effective intervention point. Contacting them before
+          they reach Very High Risk is significantly cheaper than recovering defaulted debt.
+        </div>
+      </div>
+    </div>
+
+    <!-- RISK TIERS -->
+    <div id="tab-tiers" class="panel">
+      <div class="pg-title">Risk Tier Segmentation</div>
+      <div class="pg-sub">Every customer placed into one of four tiers based on predicted default probability</div>
+
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--green)"></div>
+          <div class="kpi-label">Low Risk</div>
+          <div class="kpi-val" style="color:var(--green)">1,784</div>
+          <div class="kpi-desc">29.7% of portfolio · 7.7% default rate</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:#C97000"></div>
+          <div class="kpi-label">Medium Risk</div>
+          <div class="kpi-val" style="color:#C97000">2,210</div>
+          <div class="kpi-desc">36.8% of portfolio · 14.5% default rate</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:#C04D00"></div>
+          <div class="kpi-label">High Risk</div>
+          <div class="kpi-val" style="color:#C04D00">1,065</div>
+          <div class="kpi-desc">17.8% of portfolio · 29.0% default rate</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--red)"></div>
+          <div class="kpi-label">Very High Risk</div>
+          <div class="kpi-val" style="color:var(--red)">941</div>
+          <div class="kpi-desc">15.7% of portfolio · 59.6% default rate</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="c-title">Tier Breakdown</div>
+        <div class="c-sub">6,000 test customers · Probability thresholds applied</div>
+
+        <div
+          style="display:grid;grid-template-columns:12px 160px 1fr 80px 90px 100px 160px;gap:12px;padding:0 14px;margin-bottom:8px">
+          <div></div>
+          <div
+            style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">
+            Tier</div>
+          <div
+            style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">
+            Share</div>
+          <div
+            style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;text-align:center">
+            Count</div>
+          <div
+            style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;text-align:center">
+            Default %</div>
+          <div
+            style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;text-align:center">
+            Probability</div>
+          <div
+            style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;text-align:right">
+            Response</div>
+        </div>
+
+        <div class="tier-row">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--green)"></div>
+          <div class="tier-name" style="color:var(--green)">Low Risk</div>
+          <div class="tier-bg">
+            <div class="tier-fill" style="width:29.7%;background:var(--green)"></div>
+          </div>
+          <div class="tier-stat" style="color:var(--green)">1,784</div>
+          <div class="tier-stat" style="color:var(--green)">7.7%</div>
+          <div class="tier-stat" style="color:var(--muted);font-size:11px">p &lt; 20%</div>
+          <div style="text-align:right"><span class="badge b-green">Approve · Upsell</span></div>
+        </div>
+
+        <div class="tier-row">
+          <div style="width:10px;height:10px;border-radius:50%;background:#C97000"></div>
+          <div class="tier-name" style="color:#C97000">Medium Risk</div>
+          <div class="tier-bg">
+            <div class="tier-fill" style="width:36.8%;background:#C97000"></div>
+          </div>
+          <div class="tier-stat" style="color:#C97000">2,210</div>
+          <div class="tier-stat" style="color:#C97000">14.5%</div>
+          <div class="tier-stat" style="color:var(--muted);font-size:11px">20 – 40%</div>
+          <div style="text-align:right"><span class="badge b-amber">Approve · Monitor</span></div>
+        </div>
+
+        <div class="tier-row">
+          <div style="width:10px;height:10px;border-radius:50%;background:#C04D00"></div>
+          <div class="tier-name" style="color:#C04D00">High Risk</div>
+          <div class="tier-bg">
+            <div class="tier-fill" style="width:17.8%;background:#C04D00"></div>
+          </div>
+          <div class="tier-stat" style="color:#C04D00">1,065</div>
+          <div class="tier-stat" style="color:#C04D00">29.0%</div>
+          <div class="tier-stat" style="color:var(--muted);font-size:11px">40 – 60%</div>
+          <div style="text-align:right"><span class="badge b-amber">Reduce Limit</span></div>
+        </div>
+
+        <div class="tier-row">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--red)"></div>
+          <div class="tier-name" style="color:var(--red)">Very High Risk</div>
+          <div class="tier-bg">
+            <div class="tier-fill" style="width:15.7%;background:var(--red)"></div>
+          </div>
+          <div class="tier-stat" style="color:var(--red)">941</div>
+          <div class="tier-stat" style="color:var(--red)">59.6%</div>
+          <div class="tier-stat" style="color:var(--muted);font-size:11px">p &gt; 60%</div>
+          <div style="text-align:right"><span class="badge b-red">Decline · Collateral</span></div>
+        </div>
+
+        <div class="notice n-blue" style="margin-top:14px">
+          Default rates rise monotonically across tiers — 7.7% to 59.6%. A Very High Risk customer is 7.7× more likely
+          to default than a Low Risk customer. 66.5% of the portfolio sits in Low or Medium Risk and can be approved
+          with confidence.
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="c-title">Default Rate by Tier</div>
+          <div class="c-sub">Confirms meaningful separation between tiers</div>
+          <div class="mono-flow">
+            <div class="mono-item">
+              <div class="mono-val" style="color:var(--green)">7.7%</div>
+              <div class="mono-lbl">Low</div>
+            </div>
+            <div class="mono-arr">→</div>
+            <div class="mono-item">
+              <div class="mono-val" style="color:#C97000">14.5%</div>
+              <div class="mono-lbl">Medium</div>
+            </div>
+            <div class="mono-arr">→</div>
+            <div class="mono-item">
+              <div class="mono-val" style="color:#C04D00">29.0%</div>
+              <div class="mono-lbl">High</div>
+            </div>
+            <div class="mono-arr">→</div>
+            <div class="mono-item">
+              <div class="mono-val" style="color:var(--red)">59.6%</div>
+              <div class="mono-lbl">Very High</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.7">The model is not applying arbitrary cutoffs.
+            Each tier reflects a genuinely different level of credit risk, validated by actual default outcomes in the
+            test set.</div>
+        </div>
+
+        <div class="card">
+          <div class="c-title">Detection Efficiency</div>
+          <div class="c-sub">Proportion of defaulters caught by review volume</div>
+          <canvas id="liftCanvas"></canvas>
+          <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6">Reviewing the top 30% of
+            customers by risk score identifies 62.3% of all defaulters — compared to 30% under random selection.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCIAL IMPACT -->
+    <div id="tab-financial" class="panel">
+      <div class="pg-title">Financial Impact</div>
+      <div class="pg-sub">Capital at stake and the cost of model errors at the current decision threshold</div>
+
+      <!-- INTERACTIVE CONTROLS -->
+      <div class="ctrl-panel">
+        <div class="ctrl-title">Adjust Financial Assumptions</div>
+        <div class="ctrl-sub">Drag the sliders to update all figures below in real time</div>
+        <div class="ctrl-grid">
+          <div class="ctrl-item">
+            <label>Decision Threshold</label>
+            <input type="range" id="ctrl-threshold" min="0.30" max="0.60" step="0.05" value="0.50"
+              oninput="recalcFinancial()">
+            <div class="ctrl-val" id="disp-threshold">0.50</div>
+          </div>
+          <div class="ctrl-item">
+            <label>Loss Rate (% of credit limit lost)</label>
+            <input type="range" id="ctrl-lossrate" min="0.50" max="1.00" step="0.05" value="0.80"
+              oninput="recalcFinancial()">
+            <div class="ctrl-val" id="disp-lossrate">80%</div>
+          </div>
+          <div class="ctrl-item">
+            <label>Profit per Good Customer (NT$)</label>
+            <input type="range" id="ctrl-profit" min="5000" max="30000" step="1000" value="15000"
+              oninput="recalcFinancial()">
+            <div class="ctrl-val" id="disp-profit">NT$15,000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="fin-block">
+          <div class="fin-stripe" style="background:var(--green)"></div>
+          <div class="fin-label">Capital Protected</div>
+          <div class="fin-val" style="color:var(--green)" id="fin-protected">NT$94.5M</div>
+          <div class="fin-note" id="fin-protected-note">705 defaulters identified × NT$133,987</div>
+        </div>
+        <div class="fin-block">
+          <div class="fin-stripe" style="background:var(--red)"></div>
+          <div class="fin-label">Missed Defaulters</div>
+          <div class="fin-val" style="color:var(--red)" id="fin-missed">NT$83.3M</div>
+          <div class="fin-note" id="fin-missed-note">622 missed × NT$133,987</div>
+        </div>
+        <div class="fin-block">
+          <div class="fin-stripe" style="background:#C97000"></div>
+          <div class="fin-label">Good Customers Declined</div>
+          <div class="fin-val" style="color:#C97000" id="fin-declined">NT$10.2M</div>
+          <div class="fin-note" id="fin-declined-note">682 wrongly flagged × NT$15,000</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="c-title">Where Losses Arise</div>
+          <div class="c-sub" id="fin-sub">Error cost breakdown at threshold 0.50</div>
+
+          <div style="margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:13px;font-weight:500;color:var(--red)">Missed defaulters</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--red)"
+                id="fin-missed-bar-val">NT$83.3M</span>
+            </div>
+            <div
+              style="height:12px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--rule)">
+              <div id="fin-missed-bar"
+                style="height:100%;width:89%;background:var(--red);opacity:0.55;border-radius:3px"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px" id="fin-missed-bar-note">622 customers ·
+              NT$133,987 each</div>
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:13px;font-weight:500;color:#C97000">Good customers declined</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#C97000"
+                id="fin-declined-bar-val">NT$10.2M</span>
+            </div>
+            <div
+              style="height:12px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--rule)">
+              <div id="fin-declined-bar"
+                style="height:100%;width:11%;background:#C97000;opacity:0.55;border-radius:3px"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px" id="fin-declined-bar-note">682 customers ·
+              NT$15,000 each</div>
+          </div>
+
+          <div class="notice n-amber" style="margin-top:16px" id="fin-ratio-notice">
+            Missing a defaulter costs 8.2× more than declining a good customer. The bank should consider a lower
+            threshold — particularly in a rising interest rate or recession environment.
+          </div>
+        </div>
+
+        <div>
+          <div style="margin-bottom:14px">
+            <div class="ratio-box">
+              <div class="ratio-num" id="fin-ratio">8.2×</div>
+              <div class="ratio-sub">Cost of a missed defaulter vs a wrongly declined customer</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="c-title">Threshold Options</div>
+            <div class="c-sub">Adjusting the decision threshold changes the trade-off</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Threshold</th>
+                  <th>Recall</th>
+                  <th>Precision</th>
+                  <th>Strategy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="trow-030">
+                  <td class="mc">0.30</td>
+                  <td class="mc" style="color:var(--green)">76.6%</td>
+                  <td class="mc">35.5%</td>
+                  <td><span class="badge b-red">Capital protection</span></td>
+                </tr>
+                <tr id="trow-040">
+                  <td class="mc">0.40</td>
+                  <td class="mc" style="color:var(--green)">65.6%</td>
+                  <td class="mc">43.4%</td>
+                  <td><span class="badge b-amber">Recommended</span></td>
+                </tr>
+                <tr id="trow-050" style="background:var(--blue-lt)">
+                  <td class="mc" style="color:var(--blue);font-weight:600">0.50 ★</td>
+                  <td class="mc">53.1%</td>
+                  <td class="mc">50.8%</td>
+                  <td><span class="badge b-blue">Current</span></td>
+                </tr>
+                <tr id="trow-060">
+                  <td class="mc">0.60</td>
+                  <td class="mc" style="color:var(--red)">42.3%</td>
+                  <td class="mc">59.6%</td>
+                  <td><span class="badge b-green">Growth focus</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EARLY WARNING -->
+    <div id="tab-early" class="panel">
+      <div class="pg-title">Early Warning</div>
+      <div class="pg-sub">Signals and recommended responses by risk tier</div>
+
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--red)"></div>
+          <div class="kpi-label">Immediate Review</div>
+          <div class="kpi-val" style="color:var(--red)">941</div>
+          <div class="kpi-desc">Very High Risk — act this week</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:#C04D00"></div>
+          <div class="kpi-label">Monitor Closely</div>
+          <div class="kpi-val" style="color:#C04D00">1,065</div>
+          <div class="kpi-desc">High Risk — monthly review</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--green)"></div>
+          <div class="kpi-label">Standard Process</div>
+          <div class="kpi-val" style="color:var(--green)">3,994</div>
+          <div class="kpi-desc">Low and Medium Risk</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar" style="background:var(--navy)"></div>
+          <div class="kpi-label">Defaulters in Top 30%</div>
+          <div class="kpi-val" style="color:var(--navy)">62.3%</div>
+          <div class="kpi-desc">Of all defaulters identified</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="c-title">Response by Tier</div>
+          <div class="c-sub">Recommended actions for the risk team</div>
+
+          <div class="wcard" style="border-left-color:var(--red)">
+            <div class="wt" style="color:var(--red)">Very High Risk — 941 customers</div>
+            <div class="wd">Immediate contact required. Decline new credit applications. Request collateral or guarantor
+              for existing facilities. Consider restructuring conversations before default occurs. 59.6% of this group
+              is expected to default.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:#C04D00">
+            <div class="wt" style="color:#C04D00">High Risk — 1,065 customers</div>
+            <div class="wd">Reduce credit limit by 30–50%. Do not approve limit increases. Flag for monthly review. If
+              the customer contacts the bank, offer a payment plan. Any further payment delay should trigger escalation
+              to Very High Risk.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:#C97000">
+            <div class="wt" style="color:#C97000">Medium Risk — 2,210 customers</div>
+            <div class="wd">Approve without upselling. Review quarterly. If the most recent payment status deteriorates
+              by one month, escalate to High Risk immediately. These customers are the most likely to tip under adverse
+              economic conditions.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:var(--green)">
+            <div class="wt" style="color:var(--green)">Low Risk — 1,784 customers</div>
+            <div class="wd">Approve and consider for limit increases or product upsell. Annual review is sufficient.
+              These customers represent the lowest credit risk in the portfolio.</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="c-title">Re-scoring Schedule</div>
+            <div class="c-sub">Keeping the model operational</div>
+            <div class="info-row"><span class="ik">Customer re-scoring</span><span class="iv">Monthly</span></div>
+            <div class="info-row"><span class="ik">Alert trigger</span><span class="iv">+15% probability shift</span>
+            </div>
+            <div class="info-row"><span class="ik">Model retraining</span><span class="iv">Quarterly</span></div>
+            <div class="info-row"><span class="ik">Minimum acceptable AUC</span><span class="iv">0.75</span></div>
+            <div class="info-row"><span class="ik">Feature stability check</span><span class="iv">Monthly PSI</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="c-title">Key Warning Signals</div>
+            <div class="c-sub">Features with the highest predictive weight</div>
+            <div class="info-row"><span class="ik">Average payment delay (6-month)</span><span class="iv"
+                style="color:var(--red)">Highest weight</span></div>
+            <div class="info-row"><span class="ik">September payment status</span><span class="iv"
+                style="color:var(--red)">Most recent month</span></div>
+            <div class="info-row"><span class="ik">August payment status</span><span class="iv"
+                style="color:#C04D00">Second most recent</span></div>
+            <div class="info-row"><span class="ik">Consecutive late months</span><span class="iv"
+                style="color:#C04D00">Pattern drives risk</span></div>
+            <div class="info-row"><span class="ik">Credit utilisation above 80%</span><span class="iv"
+                style="color:#C97000">Secondary signal</span></div>
+            <div class="notice n-blue" style="margin-top:12px">Recent payment behaviour carries more weight than older
+              history. A customer who was on time for five months but is now two months late is higher risk than one who
+              has been consistently one month late.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOVERNANCE -->
+    <div id="tab-governance" class="panel">
+      <div class="pg-title">Limitations &amp; Governance</div>
+      <div class="pg-sub">What must be addressed before this model is used in production</div>
+
+      <div class="notice n-amber" style="margin-bottom:22px">
+        This model was developed as part of an MSc FinTech project using 2005 Taiwanese credit data. The methodology is
+        sound and the results are directionally valid, but the model requires retraining on current data before any
+        production deployment.
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="sl">Model Limitations</div>
+
+          <div class="wcard" style="border-left-color:var(--red)">
+            <div class="wt">Training Data is From 2005</div>
+            <div class="wd">Consumer payment behaviour, interest rate environments, and credit products have changed
+              substantially. The model must be retrained on current data before deployment.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:var(--red)">
+            <div class="wt">Market-Specific to Taiwan</div>
+            <div class="wd">The Taiwanese credit market has different regulatory requirements, customer behaviour, and
+              risk characteristics. This model cannot be applied in the UK, EU, or other markets without full
+              revalidation.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:#C04D00">
+            <div class="wt">Performance During Economic Shocks</div>
+            <div class="wd">The model is trained on stable economic conditions. During crises such as rapid rate
+              increases, recessions, or financial shocks, historical payment patterns may break down and model
+              performance will degrade.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:#C04D00">
+            <div class="wt">Probability Calibration</div>
+            <div class="wd">The predicted probabilities have not been validated against observed default rates.
+              Calibration is required before the outputs can be used in pricing models or regulatory capital
+              calculations.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:#C97000">
+            <div class="wt">No Macroeconomic Inputs</div>
+            <div class="wd">The model relies entirely on customer-level payment history. It has no awareness of interest
+              rate changes, unemployment levels, or GDP — all of which materially affect default rates at portfolio
+              level.</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sl">Regulatory &amp; Fairness</div>
+
+          <div class="wcard" style="border-left-color:var(--red)">
+            <div class="wt" style="color:var(--red)">Gender Variable Must Be Removed</div>
+            <div class="wd">SEX is the 5th most important feature in the model. Using gender in credit decisions
+              violates equal credit opportunity regulations in most jurisdictions including the UK and EU. This variable
+              must be excluded before production. The expected reduction in AUC is less than 0.5%.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:#C97000">
+            <div class="wt">Marital Status — Legal Review Required</div>
+            <div class="wd">MARRIAGE appears in the top 10 predictive features. Depending on jurisdiction, a disparate
+              impact assessment may be required before this variable can be used in credit decisions.</div>
+          </div>
+
+          <div class="wcard" style="border-left-color:var(--green)">
+            <div class="wt" style="color:var(--green)">Individual Decision Explanations — SHAP</div>
+            <div class="wd">The model uses SHAP values to produce a clear explanation for every individual credit
+              decision. If a customer or regulator requests the reasoning behind a decline or flag, the bank can provide
+              a human-readable breakdown of the factors involved. This satisfies the GDPR right to explanation.</div>
+          </div>
+
+          <div class="card" style="margin-top:0">
+            <div class="c-title">Pre-Deployment Checklist</div>
+            <div class="c-sub">Actions required before going live</div>
+            <div class="info-row"><span class="ik">Remove gender variable</span><span class="iv"><span
+                  class="badge b-red">Required</span></span></div>
+            <div class="info-row"><span class="ik">Retrain on current data</span><span class="iv"><span
+                  class="badge b-red">Required</span></span></div>
+            <div class="info-row"><span class="ik">Validate probability calibration</span><span class="iv"><span
+                  class="badge b-red">Required</span></span></div>
+            <div class="info-row"><span class="ik">Disparate impact assessment</span><span class="iv"><span
+                  class="badge b-amber">Recommended</span></span></div>
+            <div class="info-row"><span class="ik">Legal review — marital status</span><span class="iv"><span
+                  class="badge b-amber">Recommended</span></span></div>
+            <div class="info-row"><span class="ik">Individual decision explanations</span><span class="iv"><span
+                  class="badge b-green">In place</span></span></div>
+            <div class="info-row"><span class="ik">Quarterly retraining cadence</span><span class="iv"><span
+                  class="badge b-amber">Recommended</span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="fl">Credit Default Risk Intelligence · MSc FinTech · Group 3</div>
+    <div class="fr">Random Forest · Taiwan Credit Dataset · AUC 0.7686</div>
+  </div>
+
+  <script>
+    function show(name, el) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      el.classList.add('active');
+      if (name === 'tiers') setTimeout(drawLift, 80);
+    }
+
+    function drawLift() {
+      const c = document.getElementById('liftCanvas');
+      if (!c) return;
+      const dpr = window.devicePixelRatio || 1;
+      const W = c.offsetWidth, H = 190;
+      c.width = W * dpr; c.height = H * dpr;
+      const ctx = c.getContext('2d');
+      ctx.scale(dpr, dpr);
+      const p = { t: 16, r: 16, b: 30, l: 42 };
+      const cw = W - p.l - p.r, ch = H - p.t - p.b;
+      ctx.fillStyle = '#F4F3EF'; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = '#E4E2DC'; ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = p.t + ch * i / 4; ctx.beginPath(); ctx.moveTo(p.l, y); ctx.lineTo(p.l + cw, y); ctx.stroke();
+        const x = p.l + cw * i / 4; ctx.beginPath(); ctx.moveTo(x, p.t); ctx.lineTo(x, p.t + ch); ctx.stroke();
+      }
+      ctx.fillStyle = '#7A7A7A'; ctx.font = '10px JetBrains Mono,monospace'; ctx.textAlign = 'right';
+      for (let i = 0; i <= 4; i++) ctx.fillText((100 - i * 25) + '%', p.l - 5, p.t + ch * i / 4 + 4);
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 4; i++) ctx.fillText((i * 25) + '%', p.l + cw * i / 4, p.t + ch + 18);
+      ctx.strokeStyle = '#BCBCBC'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(p.l, p.t + ch); ctx.lineTo(p.l + cw, p.t); ctx.stroke();
+      ctx.setLineDash([]);
+      const pts = [[0, 0], [5, 14], [10, 26], [15, 38], [20, 49], [25, 57], [30, 62.3], [40, 72], [50, 80], [60, 87], [70, 92], [80, 96], [90, 98.5], [100, 100]];
+      ctx.fillStyle = 'rgba(27,47,94,0.07)'; ctx.beginPath();
+      pts.forEach(([x, y], i) => { const cx = p.l + (x / 100) * cw, cy = p.t + ch - (y / 100) * ch; i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy); });
+      ctx.lineTo(p.l + cw, p.t + ch); ctx.lineTo(p.l, p.t + ch); ctx.fill();
+      ctx.strokeStyle = '#1B2F5E'; ctx.lineWidth = 2.2; ctx.beginPath();
+      pts.forEach(([x, y], i) => { const cx = p.l + (x / 100) * cw, cy = p.t + ch - (y / 100) * ch; i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy); });
+      ctx.stroke();
+      const mx = p.l + 0.3 * cw, my = p.t + ch - 0.623 * ch;
+      ctx.strokeStyle = '#8A4200'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(mx, p.t + ch); ctx.lineTo(mx, my); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p.l, my); ctx.lineTo(mx, my); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#8A4200'; ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 10px JetBrains Mono,monospace'; ctx.textAlign = 'left';
+      ctx.fillText('30% → 62.3%', mx + 7, my - 3);
+    }
+
+    window.addEventListener('resize', () => { if (document.getElementById('tab-tiers').classList.contains('active')) drawLift(); });
+
+    // ── Financial Impact recalculator ──────────────────────────────────────────
+    // Per-threshold confusion matrix values derived from the Python notebooks
+    const THRESHOLD_DATA = {
+      '0.30': { tp: 1018, fp: 1848, fn: 309, tn: 3825 },
+      '0.35': { tp: 922, fp: 1390, fn: 405, tn: 4283 },
+      '0.40': { tp: 872, fp: 1138, fn: 455, tn: 4535 },
+      '0.45': { tp: 796, fp: 883, fn: 531, tn: 4790 },
+      '0.50': { tp: 705, fp: 682, fn: 622, tn: 4991 },
+      '0.55': { tp: 609, fp: 518, fn: 718, tn: 5155 },
+      '0.60': { tp: 563, fp: 400, fn: 764, tn: 5273 }
+    };
+    const AVG_CREDIT_LIMIT = 133987; // NT$ — from df['LIMIT_BAL'].mean()
+
+    function fmtNT(val) {
+      if (val >= 1e6) return 'NT$' + (val / 1e6).toFixed(1) + 'M';
+      return 'NT$' + Math.round(val).toLocaleString();
+    }
+
+    function recalcFinancial() {
+      const tRaw = parseFloat(document.getElementById('ctrl-threshold').value);
+      const tKey = tRaw.toFixed(2);
+      const lossRate = parseFloat(document.getElementById('ctrl-lossrate').value);
+      const profit = parseFloat(document.getElementById('ctrl-profit').value);
+
+      // Update slider display labels
+      document.getElementById('disp-threshold').textContent = tKey;
+      document.getElementById('disp-lossrate').textContent = Math.round(lossRate * 100) + '%';
+      document.getElementById('disp-profit').textContent = 'NT$' + profit.toLocaleString();
+
+      // Get confusion matrix for this threshold (fallback to 0.50)
+      const cm = THRESHOLD_DATA[tKey] || THRESHOLD_DATA['0.50'];
+      const { tp, fp, fn } = cm;
+
+      const lossPerDefault = AVG_CREDIT_LIMIT * lossRate;
+      const capitalProtected = tp * lossPerDefault;
+      const missedLoss = fn * lossPerDefault;
+      const declinedLoss = fp * profit;
+
+      // Top blocks
+      document.getElementById('fin-protected').textContent = fmtNT(capitalProtected);
+      document.getElementById('fin-protected-note').textContent = `${tp} defaulters identified × NT$${Math.round(lossPerDefault).toLocaleString()}`;
+      document.getElementById('fin-missed').textContent = fmtNT(missedLoss);
+      document.getElementById('fin-missed-note').textContent = `${fn} missed × NT$${Math.round(lossPerDefault).toLocaleString()}`;
+      document.getElementById('fin-declined').textContent = fmtNT(declinedLoss);
+      document.getElementById('fin-declined-note').textContent = `${fp} wrongly flagged × NT$${profit.toLocaleString()}`;
+
+      // Sub-header
+      document.getElementById('fin-sub').textContent = `Error cost breakdown at threshold ${tKey}`;
+
+      // Bar chart values & widths
+      const totalCost = missedLoss + declinedLoss;
+      const missedPct = totalCost > 0 ? Math.round((missedLoss / totalCost) * 100) : 89;
+      const declinedPct = totalCost > 0 ? Math.round((declinedLoss / totalCost) * 100) : 11;
+
+      document.getElementById('fin-missed-bar-val').textContent = fmtNT(missedLoss);
+      document.getElementById('fin-missed-bar').style.width = missedPct + '%';
+      document.getElementById('fin-missed-bar-note').textContent = `${fn} customers · NT$${Math.round(lossPerDefault).toLocaleString()} each`;
+
+      document.getElementById('fin-declined-bar-val').textContent = fmtNT(declinedLoss);
+      document.getElementById('fin-declined-bar').style.width = Math.min(declinedPct, 100) + '%';
+      document.getElementById('fin-declined-bar-note').textContent = `${fp} customers · NT$${profit.toLocaleString()} each`;
+
+      // Cost ratio
+      const costPerFN = lossPerDefault;
+      const costPerFP = profit;
+      const ratio = costPerFP > 0 ? (costPerFN / costPerFP).toFixed(1) : '—';
+      document.getElementById('fin-ratio').textContent = ratio + '×';
+      document.getElementById('fin-ratio-notice').textContent =
+        `Missing a defaulter costs ${ratio}× more than declining a good customer. The bank should consider a lower threshold — particularly in a rising interest rate or recession environment.`;
+
+      // Highlight active threshold row in table
+      ['030', '040', '050', '060'].forEach(t => {
+        const row = document.getElementById('trow-' + t);
+        if (!row) return;
+        const rowVal = (parseInt(t) / 100).toFixed(2);
+        if (rowVal === tKey) {
+          row.style.background = 'var(--blue-lt)';
+        } else {
+          row.style.background = '';
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
